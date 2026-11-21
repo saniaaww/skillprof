@@ -6,9 +6,13 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	httpdelivery "github.com/saniaaww/skillprof/app/delivery/http"
+	"github.com/saniaaww/skillprof/app/repository"
+	"github.com/saniaaww/skillprof/app/service"
 	"github.com/saniaaww/skillprof/config"
 	"github.com/saniaaww/skillprof/database"
 	"github.com/saniaaww/skillprof/middleware"
+	"github.com/saniaaww/skillprof/routes"
 )
 
 func main() {
@@ -30,12 +34,28 @@ func main() {
 
 	logger.Info().Msg("PostgreSQL connected successfully")
 
+	// Initialize repositories
+	userRepo := repository.NewUserRepository(dbPool)
+	sessionRepo := repository.NewAuthSessionRepository(dbPool)
+
+	// Initialize service
+	authService := service.NewAuthService(
+		userRepo,
+		sessionRepo,
+		cfg,
+	)
+
+	// Initialize delivery
+	authDelivery := httpdelivery.NewAuthDelivery(authService)
+
+	// Initialize Fiber
 	app := fiber.New(fiber.Config{
 		AppName: cfg.AppName,
 	})
 
 	app.Use(middleware.RequestLogger(logger))
 
+	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			"status":   "success",
@@ -57,6 +77,9 @@ func main() {
 			"database": "connected",
 		})
 	})
+
+	// Register authentication routes
+	routes.RegisterAuthRoutes(app, authDelivery, cfg)
 
 	address := fmt.Sprintf(":%d", cfg.AppPort)
 

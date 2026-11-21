@@ -10,6 +10,10 @@ type AppConfig struct {
 	DBPassword string
 	DBName     string
 	DBSSLMode  string
+
+	JWTSecret           string
+	JWTExpiresIn        int
+	JWTRefreshExpiresIn int
 }
 
 func LoadAppConfig() AppConfig {
@@ -23,5 +27,9 @@ func LoadAppConfig() AppConfig {
 		DBPassword: GetEnv("DB_PASSWORD", ""),
 		DBName:     GetEnv("DB_NAME", "skillprof"),
 		DBSSLMode:  GetEnv("DB_SSL_MODE", "disable"),
+
+		JWTSecret:           GetEnv("JWT_SECRET", ""),
+		JWTExpiresIn:        GetEnvInt("JWT_EXPIRES_IN", 1),
+		JWTRefreshExpiresIn: GetEnvInt("JWT_REFRESH_EXPIRES_IN", 168),
 	}
 }
